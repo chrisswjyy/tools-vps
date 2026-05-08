@@ -5,6 +5,10 @@
 #   Telegram: @chriswijayaa
 # ─────────────────────────────────────────────
 
+if [[ $EUID -ne 0 ]]; then
+    exec sudo bash "$0" "$@"
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -670,16 +674,6 @@ menu_ipinfo() {
 }
 
 # ─── MAIN LOOP ────────────────────────────────
-
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        echo -e "\n  ${RED}Script ini harus dijalankan sebagai root.${RESET}"
-        echo -e "  ${DIM}Coba: sudo bash vps-tools.sh${RESET}\n"
-        exit 1
-    fi
-}
-
-check_root
 
 while true; do
     show_menu
