@@ -96,6 +96,7 @@ show_menu() {
     echo -e "  ${WHITE}11.${RESET} Info IP publik & geolokasi"
     echo -e "  ${WHITE}0.${RESET}  Keluar"
     echo ""
+    read -r -t 0.1 -n 10000 discard 2>/dev/null || true
     echo -ne "  ${BOLD}${YELLOW}Pilihan kamu: ${RESET}"
     read -r CHOICE
 }
