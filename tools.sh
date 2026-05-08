@@ -51,7 +51,7 @@ start_loading() {
 
 press_enter() {
     echo -e "\n  ${DIM}tekan enter buat balik ke menu...${RESET}"
-    read -r
+    read -r </dev/tty
 }
 
 typewrite() {
@@ -67,14 +67,13 @@ typewrite() {
 animate_banner() {
     clear_screen
     echo ""
-    sleep 0.05
+    sleep 0.08
     echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
-    sleep 0.05
-    echo -ne "  ${BOLD}${WHITE}"
-    typewrite "  VPS Tools by Chris" 0.04
-    sleep 0.05
+    sleep 0.08
+    echo -e "  ${BOLD}${WHITE}  VPS Tools by Chris${RESET}"
+    sleep 0.08
     echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
-    sleep 0.05
+    sleep 0.08
     echo -e "  ${DIM}Telegram: @chriswijayaa${RESET}"
     echo ""
 }
@@ -96,9 +95,9 @@ show_menu() {
     echo -e "  ${WHITE}11.${RESET} Info IP publik & geolokasi"
     echo -e "  ${WHITE}0.${RESET}  Keluar"
     echo ""
-    read -r -t 0.1 -n 10000 discard 2>/dev/null || true
+    read -r -t 0 -n 999 discard </dev/tty 2>/dev/null || true
     echo -ne "  ${BOLD}${YELLOW}Pilihan kamu: ${RESET}"
-    read -r CHOICE
+    read -r CHOICE </dev/tty
 }
 
 # ─── 1. BENCHMARK ─────────────────────────────
