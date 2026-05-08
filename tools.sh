@@ -5,10 +5,6 @@
 #   Telegram: @chriswijayaa
 # ─────────────────────────────────────────────
 
-if [[ $EUID -ne 0 ]]; then
-    exec sudo bash "$0" "$@"
-fi
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -51,7 +47,7 @@ start_loading() {
 
 press_enter() {
     echo -e "\n  ${DIM}tekan enter buat balik ke menu...${RESET}"
-    read -r </dev/tty
+    read -r
 }
 
 typewrite() {
@@ -67,13 +63,14 @@ typewrite() {
 animate_banner() {
     clear_screen
     echo ""
-    sleep 0.08
+    sleep 0.05
     echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
-    sleep 0.08
-    echo -e "  ${BOLD}${WHITE}  VPS Tools by Chris${RESET}"
-    sleep 0.08
+    sleep 0.05
+    echo -ne "  ${BOLD}${WHITE}"
+    typewrite "  VPS Tools by Chris" 0.04
+    sleep 0.05
     echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
-    sleep 0.08
+    sleep 0.05
     echo -e "  ${DIM}Telegram: @chriswijayaa${RESET}"
     echo ""
 }
@@ -95,9 +92,8 @@ show_menu() {
     echo -e "  ${WHITE}11.${RESET} Info IP publik & geolokasi"
     echo -e "  ${WHITE}0.${RESET}  Keluar"
     echo ""
-    read -r -t 0 -n 999 discard </dev/tty 2>/dev/null || true
     echo -ne "  ${BOLD}${YELLOW}Pilihan kamu: ${RESET}"
-    read -r CHOICE </dev/tty
+    read -r CHOICE
 }
 
 # ─── 1. BENCHMARK ─────────────────────────────
@@ -674,6 +670,16 @@ menu_ipinfo() {
 }
 
 # ─── MAIN LOOP ────────────────────────────────
+
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        echo -e "\n  ${RED}Script ini harus dijalankan sebagai root.${RESET}"
+        echo -e "  ${DIM}Coba: sudo bash vps-tools.sh${RESET}\n"
+        exit 1
+    fi
+}
+
+check_root
 
 while true; do
     show_menu
