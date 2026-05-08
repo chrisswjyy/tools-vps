@@ -5,6 +5,10 @@
 #   Telegram: @chriswijayaa
 # ─────────────────────────────────────────────
 
+if [[ $EUID -ne 0 ]]; then
+    exec sudo bash "$0" "$@"
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -47,7 +51,7 @@ start_loading() {
 
 press_enter() {
     echo -e "\n  ${DIM}tekan enter buat balik ke menu...${RESET}"
-    read -r
+    read -r </dev/tty
 }
 
 typewrite() {
@@ -63,14 +67,13 @@ typewrite() {
 animate_banner() {
     clear_screen
     echo ""
-    sleep 0.05
+    sleep 0.08
     echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
-    sleep 0.05
-    echo -ne "  ${BOLD}${WHITE}"
-    typewrite "  VPS Tools by Chris" 0.04
-    sleep 0.05
+    sleep 0.08
+    echo -e "  ${BOLD}${WHITE}  VPS Tools by Chris${RESET}"
+    sleep 0.08
     echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
-    sleep 0.05
+    sleep 0.08
     echo -e "  ${DIM}Telegram: @chriswijayaa${RESET}"
     echo ""
 }
@@ -82,7 +85,7 @@ show_menu() {
     echo -e "  ${WHITE}1.${RESET}  Benchmark VPS"
     echo -e "  ${WHITE}2.${RESET}  Lihat spesifikasi VPS"
     echo -e "  ${WHITE}3.${RESET}  Update & Upgrade sistem"
-    echo -e "  ${WHITE}4.${RESET}  Install Cloudflared (Tunnel)"
+    echo -e "  ${WHITE}4.${RESET}  Run Cloudflared"
     echo -e "  ${WHITE}5.${RESET}  Install bahasa pemrograman"
     echo -e "  ${WHITE}6.${RESET}  Cek koneksi & ping"
     echo -e "  ${WHITE}7.${RESET}  Monitor resource (live)"
@@ -92,8 +95,8 @@ show_menu() {
     echo -e "  ${WHITE}11.${RESET} Info IP publik & geolokasi"
     echo -e "  ${WHITE}0.${RESET}  Keluar"
     echo ""
+    read -r -t 0 -n 999 discard </dev/tty 2>/dev/null || true
     echo -ne "  ${BOLD}${YELLOW}Pilihan kamu: ${RESET}"
-    read -r CHOICE
 }
 
 # ─── 1. BENCHMARK ─────────────────────────────
@@ -280,7 +283,7 @@ menu_update() {
 menu_cloudflared() {
     clear_screen
     animate_banner
-    echo -e "  ${BOLD}${CYAN}Cloudflared Tunnel${RESET}"
+    echo -e "  ${BOLD}${CYAN}Run Cloudflared${RESET}"
     echo ""
 
     if ! command -v cloudflared &>/dev/null; then
@@ -313,7 +316,7 @@ menu_cloudflared() {
     echo ""
     echo -e "  ${WHITE}Pastikan port yang ingin kamu publish sudah berjalan.${RESET}"
     echo -ne "  ${BOLD}${YELLOW}Masukan port: ${RESET}"
-    read -r CF_PORT
+    read -r CF_PORT </dev/tty
 
     if [[ -z "$CF_PORT" ]]; then
         echo -e "  ${RED}Port nggak boleh kosong.${RESET}"
@@ -323,19 +326,17 @@ menu_cloudflared() {
 
     echo ""
     echo -e "  ${CYAN}Lagi jalanin tunnel ke port ${CF_PORT}...${RESET}"
-    echo -e "  ${DIM}(tekan Ctrl+C buat stop)${RESET}"
+    echo -e "  ${DIM}Nunggu domain keluar, bentar...${RESET}"
     echo ""
 
-    # Jalankan cloudflared dan capture URL-nya
     TMPLOG=$(mktemp)
-    cloudflared tunnel --url "http://localhost:${CF_PORT}" 2>"$TMPLOG" &
+    cloudflared tunnel --url "http://localhost:${CF_PORT}" >"$TMPLOG" 2>&1 &
     CF_PID=$!
 
-    # Tunggu URL muncul
     DOMAIN=""
-    for i in $(seq 1 30); do
+    for i in $(seq 1 40); do
         sleep 1
-        DOMAIN=$(grep -oP 'https://[a-z0-9\-]+\.trycloudflare\.com' "$TMPLOG" | head -1)
+        DOMAIN=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$TMPLOG" | head -1)
         if [[ -n "$DOMAIN" ]]; then
             break
         fi
@@ -350,12 +351,12 @@ menu_cloudflared() {
         echo -e "  ${DIM}────────────────────────────────────────────${RESET}"
     else
         echo -e "  ${RED}Gagal dapetin domain. Cek apakah port ${CF_PORT} beneran jalan.${RESET}"
+        echo -e "  ${DIM}Log cloudflared:${RESET}"
+        tail -5 "$TMPLOG"
     fi
 
-    rm -f "$TMPLOG"
-
     echo ""
-    echo -e "  ${DIM}Tunnel lagi jalan di background (PID: ${CF_PID}).${RESET}"
+    echo -e "  ${DIM}Tunnel jalan di background (PID: ${CF_PID}).${RESET}"
     echo -e "  ${DIM}Kalau mau stop: kill ${CF_PID}${RESET}"
     press_enter
 }
@@ -382,7 +383,7 @@ menu_language() {
     echo -e "  ${WHITE}0.${RESET}  Balik ke menu"
     echo ""
     echo -ne "  ${BOLD}${YELLOW}Pilih: ${RESET}"
-    read -r LANG_CHOICE
+    read -r LANG_CHOICE </dev/tty
 
     case "$LANG_CHOICE" in
         1)
@@ -418,9 +419,9 @@ menu_language() {
             ;;
         7)
             echo -e "\n  ${CYAN}Install Rust...${RESET}"
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            source "$HOME/.cargo/env"
-            echo -e "  ${GREEN}Rust $(rustc --version) berhasil diinstall!${RESET}"
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path </dev/tty
+            source "$HOME/.cargo/env" 2>/dev/null || true
+            echo -e "  ${GREEN}Rust berhasil diinstall! Jalanin: source \$HOME/.cargo/env${RESET}"
             ;;
         8)
             echo -e "\n  ${CYAN}Install Perl...${RESET}"
@@ -434,7 +435,7 @@ menu_language() {
             ;;
         10)
             echo -e "\n  ${CYAN}Install .NET...${RESET}"
-            wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+            wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
             dpkg -i /tmp/packages-microsoft-prod.deb
             apt-get update -qq
             apt-get install -y dotnet-sdk-8.0
@@ -442,12 +443,12 @@ menu_language() {
             ;;
         11)
             echo -e "\n  ${CYAN}Install Bun.js...${RESET}"
-            curl -fsSL https://bun.sh/install | bash
+            curl -fsSL https://bun.sh/install | bash -s -- </dev/tty
             echo -e "  ${GREEN}Bun berhasil diinstall! Restart terminal dulu ya.${RESET}"
             ;;
         12)
             echo -e "\n  ${CYAN}Install Deno...${RESET}"
-            curl -fsSL https://deno.land/install.sh | sh
+            curl -fsSL https://deno.land/install.sh | sh -s -- </dev/tty
             echo -e "  ${GREEN}Deno berhasil diinstall! Restart terminal dulu ya.${RESET}"
             ;;
         0) return ;;
@@ -671,18 +672,9 @@ menu_ipinfo() {
 
 # ─── MAIN LOOP ────────────────────────────────
 
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        echo -e "\n  ${RED}Script ini harus dijalankan sebagai root.${RESET}"
-        echo -e "  ${DIM}Coba: sudo bash vps-tools.sh${RESET}\n"
-        exit 1
-    fi
-}
-
-check_root
-
 while true; do
     show_menu
+    read -r CHOICE </dev/tty
     case "$CHOICE" in
         1) menu_benchmark ;;
         2) menu_specs ;;
